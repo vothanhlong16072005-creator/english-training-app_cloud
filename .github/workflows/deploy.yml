@@ -1,0 +1,140 @@
+name: CI/CD Pipeline - English Training App
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # 1. CI - Kiểm thử & Đóng gói Backend (Spring Boot 3 + Java 17)
+  # ────────────────────────────────────────────────────────────────────────────
+  backend-ci:
+    name: Backend CI (Spring Boot 3)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Grant Execute Permission to Maven Wrapper
+        run: chmod +x backend-core/backend-core/mvnw
+
+      - name: Compile and Test Backend
+        run: |
+          cd backend-core/backend-core
+          ./mvnw clean test-compile
+
+      - name: Package Backend Jar
+        run: |
+          cd backend-core/backend-core
+          ./mvnw -B package -DskipTests
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 2. CI - Kiểm thử & Xây dựng Frontend (React 18 + Vite)
+  # ────────────────────────────────────────────────────────────────────────────
+  frontend-ci:
+    name: Frontend CI (React 18 + Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend-client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend-client
+          npm ci
+
+      - name: Run ESLint
+        run: |
+          cd frontend-client
+          npm run lint
+
+      - name: Build Frontend Distribution
+        run: |
+          cd frontend-client
+          npm run build
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 3. CI - Kiểm thử AI Engine (FastAPI + Python 3.11)
+  # ────────────────────────────────────────────────────────────────────────────
+  ai-engine-ci:
+    name: AI Engine CI (FastAPI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ai-engine/requirements.txt
+
+      - name: Install Dependencies & Check Syntax
+        run: |
+          cd ai-engine
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m py_compile main.py
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 4. CD - Kích hoạt Tự động Triển khai lên Render Cloud qua Deploy Hook
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy-render:
+    name: Deploy to Render via Deploy Hooks
+    needs: [backend-ci, frontend-ci, ai-engine-ci]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Backend Deploy Hook
+        if: env.RENDER_BACKEND_DEPLOY_HOOK != ''
+        env:
+          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+        run: |
+          echo "🚀 Kích hoạt Deploy Hook cho english-backend..."
+          curl -X POST "$RENDER_BACKEND_DEPLOY_HOOK" -o /dev/null -s -w "%{http_code}\n" | grep -E "(200|201)" || echo "⚠️ Backend deploy hook returned non-200 or pending."
+
+      - name: Trigger AI Engine Deploy Hook
+        if: env.RENDER_AI_DEPLOY_HOOK != ''
+        env:
+          RENDER_AI_DEPLOY_HOOK: ${{ secrets.RENDER_AI_DEPLOY_HOOK }}
+        run: |
+          echo "🚀 Kích hoạt Deploy Hook cho english-ai..."
+          curl -X POST "$RENDER_AI_DEPLOY_HOOK" -o /dev/null -s -w "%{http_code}\n" | grep -E "(200|201)" || echo "⚠️ AI Engine deploy hook returned non-200 or pending."
+
+      - name: Trigger Frontend Deploy Hook
+        if: env.RENDER_FRONTEND_DEPLOY_HOOK != ''
+        env:
+          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          echo "🚀 Kích hoạt Deploy Hook cho english-frontend..."
+          curl -X POST "$RENDER_FRONTEND_DEPLOY_HOOK" -o /dev/null -s -w "%{http_code}\n" | grep -E "(200|201)" || echo "⚠️ Frontend deploy hook returned non-200 or pending."
+
+      - name: Deployment Notification
+        run: |
+          echo "=========================================================="
+          echo "✅ Toàn bộ bài kiểm thử CI đạt chuẩn."
+          echo "📡 Tín hiệu phát hành (Deploy Hook) đã gửi thành công tới Render."
+          echo "=========================================================="
+

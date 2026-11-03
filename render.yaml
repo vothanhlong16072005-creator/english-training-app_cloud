@@ -1,0 +1,81 @@
+# ==============================================================================
+# Render Blueprint Specification (Infrastructure as Code - IaC)
+# Đồ án Điện toán đám mây - Nhóm 10: English Training App
+# ==============================================================================
+
+services:
+  # ────────────────────────────────────────────────────────────────────────────
+  # 1. Backend Core Web Service (Spring Boot 3 + Java 17 + Docker)
+  # ────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: english-backend
+    runtime: docker
+    dockerfilePath: ./backend-core/backend-core/Dockerfile
+    dockerContext: ./backend-core/backend-core
+    region: singapore
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: english-db
+          property: connectionString
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dqqbvzmrr
+      - key: CLOUDINARY_API_KEY
+        value: "789644833813378"
+      - key: CLOUDINARY_API_SECRET
+        sync: false # Nhập an toàn qua Render Dashboard, không commit secret
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: english-ai
+          property: host
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 2. AI Engine Web Service (FastAPI + Whisper + Gemini API)
+  # ────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: english-ai
+    runtime: docker
+    dockerfilePath: ./ai-engine/Dockerfile
+    dockerContext: ./ai-engine
+    region: singapore
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 3. Frontend Client (React 18 + Vite + Nginx)
+  # ────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: english-frontend
+    runtime: docker
+    dockerfilePath: ./frontend-client/Dockerfile
+    dockerContext: ./frontend-client
+    region: singapore
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: english-backend
+          property: host
+
+databases:
+  # ────────────────────────────────────────────────────────────────────────────
+  # 4. Managed PostgreSQL Database (Render DBaaS)
+  # ────────────────────────────────────────────────────────────────────────────
+  - name: english-db
+    databaseName: english_training
+    user: english_training_user
+    region: singapore
+    plan: free
+    ipAllowList: [] # Kết nối nội bộ bảo mật từ Backend

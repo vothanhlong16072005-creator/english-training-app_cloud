@@ -22,7 +22,7 @@ export default function LessonDetail() {
   const [autoStop, setAutoStop] = useState(false);
   const [autoLoopSentence, setAutoLoopSentence] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
-  const [isLooping, setIsLooping] = useState(false);
+  const [isLooping] = useState(false);
   const [showSettings, setShowSettings] = useState(true);
   const playerRef = useRef(null);
   const intervalRef = useRef(null);

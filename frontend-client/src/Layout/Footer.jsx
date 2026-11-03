@@ -76,7 +76,7 @@ const Footer = () => {
       <div className="border-t border-[var(--border-color)]">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between">
           <p className="text-[var(--text-muted)] text-xs">
-            &copy; {new Date().getFullYear()} Eng-Lab. All rights reserved.
+            &copy; {new Date().getFullYear()} Eng-Lab • Nhóm 10 - Điện toán đám mây VKU (v1.3-ci-ready)
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <a href="#" className="text-[var(--text-muted)] hover:text-indigo-500 transition-colors">

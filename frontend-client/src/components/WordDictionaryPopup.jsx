@@ -82,7 +82,7 @@ export default function WordDictionaryPopup({ word, position, onClose }) {
           wordType,
         });
 
-      } catch (err) {
+      } catch (_err) {
         setData({ word: cleanWord, mainTranslation: "Lỗi kết nối", wordType: "" });
       } finally {
         setLoading(false);

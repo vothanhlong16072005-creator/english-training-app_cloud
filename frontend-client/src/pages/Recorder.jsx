@@ -42,7 +42,7 @@ export default function Recorder({ sentenceId, onResult }) {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setRecording(true);
-    } catch (err) {
+    } catch (_err) {
       alert(t("recorder.micError"));
     }
   };

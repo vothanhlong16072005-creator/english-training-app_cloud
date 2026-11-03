@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
-import apiClient, { api } from "../auth/apiClient";
+import { api } from "../auth/apiClient";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth/authUtils";
 
@@ -219,7 +219,7 @@ export default function VocabularyManager() {
   useEffect(() => { loadTopics(); }, []);
 
   // ── TOPIC CRUD ──────────────────────────────────────────
-  const handleTopicSaved = (saved) => {
+  const handleTopicSaved = () => {
     setShowTopicForm(false);
     setEditingTopic(null);
     loadTopics();

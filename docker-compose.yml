@@ -39,7 +39,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       AI_SERVICE_URL: http://ai-service:8000
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-englishapp_super_secret_key_2026_vku_danang}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-dqqbvzmrr}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-789644833813378}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-15CW3h71RPsMQWIJ60tIVkRhbO0}
     ports:
       - "8080:8080"
     depends_on:
@@ -55,7 +58,9 @@ services:
       dockerfile: Dockerfile
     container_name: english_ai
     restart: unless-stopped
-    # Whisper model sẽ được cache, không cần download lại mỗi lần restart
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      PORT: 8000
     volumes:
       - whisper_cache:/root/.cache/huggingface
     ports:

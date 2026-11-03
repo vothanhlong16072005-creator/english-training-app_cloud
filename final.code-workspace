@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "final",
+			"path": ".."
+		},
+		{
+			"name": ".agents",
+			"path": "../../../../FPT Trainning/Project-TTDN/Ver2/.agents"
+		}
+	],
+	"settings": {}
+}
