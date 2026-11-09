@@ -4,10 +4,12 @@
 
 import { getToken, logout } from "./authUtils";
 
+const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 const envUrl = import.meta.env.VITE_API_URL;
+
 export const BASE_URL = envUrl
     ? (envUrl.startsWith("http") ? envUrl : `https://${envUrl}`)
-    : "";
+    : (isLocal ? "http://localhost:8080" : "https://english-backend-bgos.onrender.com");
 
 /**
  * Wrapper quanh fetch, tự động:
@@ -21,7 +23,6 @@ export const BASE_URL = envUrl
  */
 const apiClient = async (endpoint, options = {}, requiresAuth = true) => {
     const url = `${BASE_URL}${endpoint}`;
-
 
     const headers = {
         "Content-Type": "application/json",

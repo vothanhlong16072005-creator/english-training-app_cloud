@@ -63,11 +63,10 @@ services:
     plan: free
     healthCheckPath: /
     envVars:
+      - key: PORT
+        value: "10000"
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: english-backend
-          property: host
+        value: "https://english-backend-bgos.onrender.com"
 
 databases:
   # ────────────────────────────────────────────────────────────────────────────
