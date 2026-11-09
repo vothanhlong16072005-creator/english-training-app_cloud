@@ -4,8 +4,10 @@
 
 import { getToken, logout } from "./authUtils";
 
-const BASE_URL = "http://localhost:8080"; // Thay bằng URL backend của bạn
-// const BASE_URL = "";
+const envUrl = import.meta.env.VITE_API_URL;
+export const BASE_URL = envUrl
+    ? (envUrl.startsWith("http") ? envUrl : `https://${envUrl}`)
+    : "";
 
 /**
  * Wrapper quanh fetch, tự động:

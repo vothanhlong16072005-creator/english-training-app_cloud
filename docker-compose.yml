@@ -45,6 +45,10 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-15CW3h71RPsMQWIJ60tIVkRhbO0}
     ports:
       - "8080:8080"
+    networks:
+      default:
+        aliases:
+          - english-backend
     depends_on:
       db:
         condition: service_healthy

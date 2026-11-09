@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../auth/apiClient";
+import { api, BASE_URL } from "../auth/apiClient";
 import { getUser, logout } from "../auth/authUtils";
 import { useTranslation } from "react-i18next";
 
@@ -74,7 +74,7 @@ function UploadableAvatar({ user, onUploadSuccess }) {
             formData.append("file", file);
 
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:8080/api/users/${user.userId}/avatar`, {
+            const res = await fetch(`${BASE_URL}/api/users/${user.userId}/avatar`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
