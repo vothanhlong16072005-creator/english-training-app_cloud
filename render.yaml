@@ -14,18 +14,18 @@ services:
     dockerContext: ./backend-core/backend-core
     region: singapore
     plan: free
-    healthCheckPath: /
+    healthCheckPath: /api/vocabularies
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: english-db
           property: connectionString
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: update
+        value: "update"
       - key: JWT_SECRET
         generateValue: true
       - key: CLOUDINARY_CLOUD_NAME
-        value: dqqbvzmrr
+        value: "dqqbvzmrr"
       - key: CLOUDINARY_API_KEY
         value: "789644833813378"
       - key: CLOUDINARY_API_SECRET
@@ -49,7 +49,7 @@ services:
     healthCheckPath: /
     envVars:
       - key: PORT
-        value: 8000
+        value: "8000"
 
   # ────────────────────────────────────────────────────────────────────────────
   # 3. Frontend Client (React 18 + Vite + Nginx)

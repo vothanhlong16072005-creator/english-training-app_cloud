@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public routes
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/", "/health", "/api/auth/**").permitAll()
                         
                         // Lessons: GET is public, POST/PUT/DELETE require ADMIN role
                         .requestMatchers(HttpMethod.GET, "/api/lessons/**").permitAll()
