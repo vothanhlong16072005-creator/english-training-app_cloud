@@ -1,0 +1,36 @@
+name: Render Cloud Anti-Sleep Keep-Alive
+
+on:
+  schedule:
+    # Chạy mỗi 10 phút một lần để giữ Render Free-tier luôn thức (Spin-down timeout là 15 phút)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Cho phép kích hoạt thủ công từ tab Actions
+
+jobs:
+  ping-services:
+    name: Health Ping Render Services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend Health Endpoint
+        run: |
+          echo "Pinging Backend API..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://english-backend-bgos.onrender.com/api/vocabularies || echo "000")
+          echo "Backend HTTP status: $HTTP_CODE"
+
+      - name: Ping Frontend Endpoint
+        run: |
+          echo "Pinging Frontend Client..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://english-frontend-1gwz.onrender.com/ || echo "000")
+          echo "Frontend HTTP status: $HTTP_CODE"
+
+      - name: Ping AI Engine Endpoint (if URL provided)
+        env:
+          AI_URL: ${{ secrets.RENDER_AI_URL }}
+        run: |
+          if [ -n "$AI_URL" ]; then
+            echo "Pinging AI Engine at $AI_URL..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$AI_URL" || echo "000")
+            echo "AI Engine HTTP status: $HTTP_CODE"
+          else
+            echo "RENDER_AI_URL secret not set. Skipping AI engine direct ping."
+          fi
