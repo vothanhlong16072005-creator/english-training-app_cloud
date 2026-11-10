@@ -25,9 +25,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLOUDINARY_CLOUD_NAME
-        value: "dqqbvzmrr"
+        value: "dstpzjcom"
       - key: CLOUDINARY_API_KEY
-        value: "789644833813378"
+        value: "519388327242718"
       - key: CLOUDINARY_API_SECRET
         sync: false # Nhập an toàn qua Render Dashboard, không commit secret
       - key: AI_SERVICE_URL
