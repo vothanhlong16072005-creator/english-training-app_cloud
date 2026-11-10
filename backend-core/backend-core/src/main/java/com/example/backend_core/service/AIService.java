@@ -2,6 +2,7 @@ package com.example.backend_core.service;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,14 +19,24 @@ public class AIService {
 
     private final RestTemplate restTemplate;
 
+    @Value("${ai.service.url:${AI_SERVICE_URL:http://localhost:8000}}")
+    private String aiBaseUrl;
+
     public AIService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     public Map<String, Object> evaluateAudio(MultipartFile audio, String expectedText) {
         try {
-             String url = "http://localhost:8000/evaluate";
-//            String url = "http://ai-service:8000/evaluate";
+            String baseUrl = aiBaseUrl != null ? aiBaseUrl.trim() : "http://localhost:8000";
+            if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+                baseUrl = "http://" + baseUrl;
+            }
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String url = baseUrl + "/evaluate";
+
             // Build multipart body
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("audio", new ByteArrayResource(audio.getBytes()) {
