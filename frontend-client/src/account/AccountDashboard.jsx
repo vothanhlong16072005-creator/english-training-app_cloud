@@ -81,6 +81,9 @@ function UploadableAvatar({ user, onUploadSuccess }) {
             });
 
             if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất và đăng nhập lại!");
+                }
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || "Upload thất bại");
             }
