@@ -32,6 +32,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Cho phép toàn bộ preflight OPTIONS requests đi qua tự do
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Public routes
                         .requestMatchers("/", "/health", "/api/auth/**").permitAll()
                         
@@ -61,6 +64,9 @@ public class SecurityConfig {
 
                         // User vocabulary — cần đăng nhập
                         .requestMatchers("/api/user-vocabulary/**").authenticated()
+
+                        // Evaluation chấm phát âm & lịch sử — cần đăng nhập
+                        .requestMatchers("/api/evaluate/**").authenticated()
 
                         // Upload avatar — cần đăng nhập
                         .requestMatchers(HttpMethod.POST, "/api/users/*/avatar").authenticated()

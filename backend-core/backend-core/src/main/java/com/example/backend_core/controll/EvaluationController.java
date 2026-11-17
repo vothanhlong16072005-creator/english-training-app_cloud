@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/evaluate")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost" })
 @RequiredArgsConstructor
 public class EvaluationController {
 
@@ -40,29 +39,36 @@ public class EvaluationController {
         public ResponseEntity<?> evaluate(	
                         @RequestParam("audio") MultipartFile audio,
                         @RequestParam("sentenceId") Long sentenceId,
-                        Authentication authentication // ← bỏ userId param, thêm cái này
+                        Authentication authentication
         ) {	
+                if (authentication == null || authentication.getName() == null) {
+                        return ResponseEntity.status(401).body(Map.of("error", "Unauthorized. Please log in again."));
+                }
+
                 // Lấy user từ JWT token
                 String username = authentication.getName();
                 User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
                 // Lấy sentence từ DB
                 Sentence sentence = sentenceRepository.findById(sentenceId)
-                                .orElseThrow(() -> new RuntimeException("Sentence not found"));
+                                .orElseThrow(() -> new RuntimeException("Sentence not found: " + sentenceId));
 
                 // Gọi Python AI
                 Map<String, Object> aiResult = aiService.evaluateAudio(
                                 audio, sentence.getContent());
 
+                if (aiResult == null) {
+                        return ResponseEntity.status(502).body(Map.of("error", "AI service returned null result"));
+                }
+
                 // Lưu Evaluation vào DB
                 Evaluation evaluation = new Evaluation();
                 evaluation.setSentence(sentence);
                 evaluation.setUser(user);
-                evaluation.setTranscript(aiResult.get("transcript").toString());
+                evaluation.setTranscript(aiResult.get("transcript") != null ? aiResult.get("transcript").toString() : "");
                 evaluation.setExpectedTextSnapshot(sentence.getContent());
-                evaluation.setScore(Double.valueOf(aiResult.get("score").toString()));
-//                evaluation.setMistakes(aiResult.get("mistakes").toString());
+                evaluation.setScore(aiResult.get("score") != null ? Double.valueOf(aiResult.get("score").toString()) : 0.0);
                 Gson gson = new Gson();
                 evaluation.setMistakes(gson.toJson(aiResult.get("mistakes")));
                 
@@ -71,12 +77,15 @@ public class EvaluationController {
                 return ResponseEntity.ok(aiResult);
         }
         
-     // GET /api/evaluations/history — lấy lịch sử của user đang login
+        // GET /api/evaluate/history — lấy lịch sử của user đang login
         @GetMapping("/history")
         public ResponseEntity<?> getHistory(Authentication authentication) {
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+            }
             String username = authentication.getName();
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
             
             List<Evaluation> history = evaluationRepository
                     .findByUserIdOrderByCreatedAtDesc(user.getId());

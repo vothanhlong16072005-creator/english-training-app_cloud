@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/sentences")
 @RequiredArgsConstructor
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost" })
 public class SentenceController {
 
     private final SentenceService sentenceService;

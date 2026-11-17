@@ -19,7 +19,6 @@ import com.example.backend_core.service.LessonService;
 
 @RestController
 @RequestMapping("/api/lessons")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost" })
 public class LessonController {
 
     private final LessonService lessonService;

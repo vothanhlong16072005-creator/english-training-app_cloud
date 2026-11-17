@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/user-vocabulary")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost" })
 @RequiredArgsConstructor
 public class UserVocabularyController {
 
