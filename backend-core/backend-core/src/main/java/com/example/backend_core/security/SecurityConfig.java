@@ -31,12 +31,18 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized: " + authException.getMessage() + "\"}");
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép toàn bộ preflight OPTIONS requests đi qua tự do
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Public routes
-                        .requestMatchers("/", "/health", "/api/auth/**").permitAll()
+                        .requestMatchers("/", "/health", "/error", "/api/auth/**").permitAll()
                         
                         // Lessons: GET is public, POST/PUT/DELETE require ADMIN role
                         .requestMatchers(HttpMethod.GET, "/api/lessons/**").permitAll()

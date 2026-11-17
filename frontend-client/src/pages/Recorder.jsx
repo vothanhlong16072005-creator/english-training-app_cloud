@@ -64,25 +64,36 @@ export default function Recorder({ sentenceId, onResult }) {
 
 
       const token = getToken();
+      if (!token) {
+        throw new Error("Bạn chưa đăng nhập. Vui lòng đăng nhập tài khoản trước khi nộp bài!");
+      }
 
-      // CẢNH BÁO: Nếu ngươi đi qua Java Server (8080), Java phải cấu trúc lại DTO để hứng được 'word_analysis'
+      // Gửi audio và sentenceId lên endpoint đánh giá
       const res = await fetch(`${BASE_URL}/api/evaluate`, {
-        // const res = await fetch("/api/evaluate", {
         method: "POST",
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
 
       if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
+        let serverMsg = "";
+        try {
+          const errData = await res.json();
+          serverMsg = errData.error || errData.message || "";
+        } catch { /* ignore non-json errors */ }
+
+        if (res.status === 401) {
           throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất và đăng nhập lại!");
         }
-        if (res.status === 500) {
-          throw new Error("Dịch vụ AI đang khởi động lại (Cold Start) trên đám mây. Vui lòng thử lại sau 30 giây!");
+        if (res.status === 403) {
+          throw new Error(`Truy cập bị từ chối (403). ${serverMsg || "Vui lòng đăng xuất và đăng nhập lại để cập nhật phiên làm việc!"}`);
         }
-        throw new Error(t("recorder.serverError"));
+        if (res.status === 500) {
+          throw new Error(serverMsg || "Dịch vụ AI đang khởi động lại (Cold Start) trên đám mây. Vui lòng thử lại sau 30 giây!");
+        }
+        throw new Error(serverMsg || t("recorder.serverError"));
       }
 
       const data = await res.json();
