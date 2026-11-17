@@ -56,6 +56,26 @@ export default function LessonDetail() {
         setYoutubePlayer(data.youtubeUrl);
         const vid = data.youtubeUrl?.split("v=")[1]?.split("&")[0] || data.videoId;
         setVideoId(vid);
+
+        // Tự động lưu tiến độ vào danh sách "Bài đang học"
+        try {
+          const key = "in_progress_lessons";
+          const list = JSON.parse(localStorage.getItem(key) || "[]");
+          const existing = list.find(item => String(item.id) === String(id));
+          const updated = [
+            {
+              id: Number(id),
+              title: data.title,
+              videoId: vid,
+              lastStudiedAt: new Date().toISOString(),
+              completed: existing?.completed || false,
+            },
+            ...list.filter(item => String(item.id) !== String(id))
+          ].slice(0, 15);
+          localStorage.setItem(key, JSON.stringify(updated));
+        } catch {
+          // ignore localStorage error
+        }
       })
       .catch(console.error);
 
@@ -80,6 +100,21 @@ export default function LessonDetail() {
                 setCurrentTime(playerRef.current.getCurrentTime());
             }, 200);
           },
+          onStateChange: (event) => {
+            // Khi xem hết video → Đánh dấu đã hoàn thành clip
+            if (window.YT && event.data === window.YT.PlayerState.ENDED) {
+              try {
+                const key = "in_progress_lessons";
+                const list = JSON.parse(localStorage.getItem(key) || "[]");
+                const updated = list.map(item =>
+                  String(item.id) === String(id) ? { ...item, completed: true } : item
+                );
+                localStorage.setItem(key, JSON.stringify(updated));
+              } catch {
+                // ignore localStorage error
+              }
+            }
+          },
         },
       });
     };
@@ -89,7 +124,7 @@ export default function LessonDetail() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (playerRef.current?.destroy) playerRef.current.destroy();
     };
-  }, [videoId]);
+  }, [videoId, id]);
 
   // --- HIGHLIGHT CÂU ĐANG PHÁT ---
   useEffect(() => {

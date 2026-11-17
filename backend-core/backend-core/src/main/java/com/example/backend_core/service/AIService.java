@@ -35,6 +35,13 @@ public class AIService {
             if (baseUrl.endsWith("/")) {
                 baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             }
+
+            // Đảm bảo luôn trỏ đúng port 8000 của FastAPI (Render internal DNS chỉ trả về hostname)
+            String hostPart = baseUrl.replace("http://", "").replace("https://", "");
+            if (!hostPart.contains(":")) {
+                baseUrl = baseUrl + ":8000";
+            }
+
             String url = baseUrl + "/evaluate";
 
             // Build multipart body
