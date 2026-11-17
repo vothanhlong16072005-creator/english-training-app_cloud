@@ -75,7 +75,15 @@ export default function Recorder({ sentenceId, onResult }) {
         body: formData,
       });
 
-      if (!res.ok) throw new Error(t("recorder.serverError"));
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất và đăng nhập lại!");
+        }
+        if (res.status === 500) {
+          throw new Error("Dịch vụ AI đang khởi động lại (Cold Start) trên đám mây. Vui lòng thử lại sau 30 giây!");
+        }
+        throw new Error(t("recorder.serverError"));
+      }
 
       const data = await res.json();
       setResult(data);

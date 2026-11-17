@@ -29,20 +29,6 @@ function formatDate(str) {
     return new Date(str).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-// ─── Avatar tĩnh (dùng ở nơi khác trong app) ─────────────────────────────────
-function Avatar({ user, size = "md" }) {
-    const sizeClass = size === "lg" ? "w-16 h-16 text-2xl" : "w-9 h-9 text-sm";
-    if (user?.avatarUrl) {
-        return <img src={user.avatarUrl} alt={user.username} className={`${sizeClass} rounded-full object-cover ring-2 ring-white`} />;
-    }
-    const initials = (user?.username || "U").charAt(0).toUpperCase();
-    return (
-        <div className={`${sizeClass} rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold ring-2 ring-white`}>
-            {initials}
-        </div>
-    );
-}
-
 // ─── Avatar có nút upload (Profile Header) ────────────────────────────────────
 function UploadableAvatar({ user, onUploadSuccess }) {
     const fileRef = useRef(null);
@@ -63,7 +49,6 @@ function UploadableAvatar({ user, onUploadSuccess }) {
             return;
         }
 
-        // Hiển thị preview ngay lập tức
         const localUrl = URL.createObjectURL(file);
         setPreview(localUrl);
         setError("");
@@ -74,7 +59,7 @@ function UploadableAvatar({ user, onUploadSuccess }) {
             formData.append("file", file);
 
             const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/api/users/${user.userId}/avatar`, {
+            const res = await fetch(`${BASE_URL}/api/users/${user?.userId || user?.id}/avatar`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
@@ -89,8 +74,6 @@ function UploadableAvatar({ user, onUploadSuccess }) {
             }
 
             const data = await res.json();
-
-            // Lưu vào localStorage để các component khác đọc được
             const stored = JSON.parse(localStorage.getItem("user") || "{}");
             stored.avatarUrl = data.avatarUrl;
             localStorage.setItem("user", JSON.stringify(stored));
@@ -110,55 +93,37 @@ function UploadableAvatar({ user, onUploadSuccess }) {
 
     return (
         <div className="relative shrink-0 group">
-            {/* Avatar */}
-            <div className="w-20 h-20 rounded-full ring-4 ring-white shadow-md overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                {preview
-                    ? <img src={preview} alt={user?.username} className="w-full h-full object-cover" />
-                    : <span className="text-3xl font-bold text-white">{initials}</span>
-                }
+            <div className="w-20 h-20 rounded-2xl ring-2 ring-indigo-500/30 shadow-md overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                {preview ? (
+                    <img src={preview} alt={user?.username} className="w-full h-full object-cover" />
+                ) : (
+                    <span className="text-3xl font-black text-white">{initials}</span>
+                )}
             </div>
 
-            {/* Overlay khi hover */}
             <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1
-                           opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                className="absolute inset-0 rounded-2xl bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 title="Thay ảnh đại diện"
             >
-                {uploading
-                    ? <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                    : <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                }
-                <span className="text-white text-[10px] font-medium leading-none">
-                    {uploading ? "Đang tải..." : "Đổi ảnh"}
+                {uploading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                )}
+                <span className="text-white text-[10px] font-bold uppercase tracking-wider">
+                    {uploading ? "..." : "Đổi ảnh"}
                 </span>
             </button>
 
-            {/* Input file ẩn */}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
-            {/* Badge camera nhỏ góc dưới phải */}
-            {!uploading && (
-                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center shadow pointer-events-none">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </div>
-            )}
-
-            {/* Thông báo lỗi */}
             {error && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 text-center text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow z-10">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 text-center text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 shadow-lg z-10 font-semibold">
                     {error}
                 </div>
             )}
@@ -169,55 +134,124 @@ function UploadableAvatar({ user, onUploadSuccess }) {
 // ─── Tab 1: Tổng Quan ─────────────────────────────────────────────────────────
 function OverviewTab({ history, savedWords, t }) {
     const navigate = useNavigate();
-    const avgScore = history.length ? Math.round(history.reduce((s, h) => s + h.score, 0) / history.length) : 0;
-    const bestScore = history.length ? Math.round(Math.max(...history.map(h => h.score))) : 0;
+    const hasHistory = history.length > 0;
+    const avgScore = hasHistory ? Math.round(history.reduce((s, h) => s + h.score, 0) / history.length) : 0;
+    const bestScore = hasHistory ? Math.round(Math.max(...history.map(h => h.score))) : 0;
     const recent = history.slice(0, 5);
 
-    const statCls = (score) => score >= 85 ? "text-green-600" : score >= 60 ? "text-amber-600" : "text-red-500";
+    const statScoreColor = (score, hasData) => {
+        if (!hasData) return "text-[var(--text-primary)]";
+        if (score >= 85) return "text-emerald-600 dark:text-emerald-400";
+        if (score >= 60) return "text-amber-600 dark:text-amber-400";
+        return "text-indigo-600 dark:text-indigo-400";
+    };
 
     return (
         <div className="space-y-6">
-            {/* Stats cards */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: t("account.stats.totalPractice"), value: history.length, icon: "🎯", color: "from-blue-500 to-indigo-600" },
-                    { label: t("account.stats.avgScore"), value: avgScore, icon: "📊", color: "from-purple-500 to-pink-600", cls: statCls(avgScore) },
-                    { label: t("account.stats.bestScore"), value: bestScore, icon: "🏆", color: "from-amber-400 to-orange-500", cls: statCls(bestScore) },
-                    { label: t("account.stats.savedWords"), value: savedWords.length, icon: "📚", color: "from-emerald-500 to-teal-600" },
-                ].map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border p-5 shadow-sm transition-shadow hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-lg mb-3`}>
-                            {stat.icon}
-                        </div>
-                        <p className="text-xs uppercase tracking-wide font-medium text-[var(--text-muted)]">{stat.label}</p>
-                        <p className={`mt-1 text-3xl font-black ${stat.cls || "text-[var(--text-primary)]"}`}>{stat.value}</p>
+                {/* 1. Total Practice */}
+                <div className="rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                        </svg>
                     </div>
-                ))}
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">
+                        {t("account.stats.totalPractice")}
+                    </p>
+                    <p className="mt-1 text-3xl font-black text-[var(--text-primary)]">
+                        {history.length}
+                    </p>
+                </div>
+
+                {/* 2. Avg Score */}
+                <div className="rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                    </div>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">
+                        {t("account.stats.avgScore")}
+                    </p>
+                    <p className={`mt-1 text-3xl font-black ${statScoreColor(avgScore, hasHistory)}`}>
+                        {hasHistory ? avgScore : "—"}
+                    </p>
+                </div>
+
+                {/* 3. Best Score */}
+                <div className="rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.004 0A5.25 5.25 0 0018 9.75v-1.5c0-.621-.504-1.125-1.125-1.125h-.872M7.5 9.75A5.25 5.25 0 0012 15m-4.5-5.25v-1.5c0-.621.504-1.125 1.125-1.125h.872m0 0a5.25 5.25 0 019.004 0" />
+                        </svg>
+                    </div>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">
+                        {t("account.stats.bestScore")}
+                    </p>
+                    <p className={`mt-1 text-3xl font-black ${statScoreColor(bestScore, hasHistory)}`}>
+                        {hasHistory ? bestScore : "—"}
+                    </p>
+                </div>
+
+                {/* 4. Saved Words */}
+                <div className="rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                    </div>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">
+                        {t("account.stats.savedWords")}
+                    </p>
+                    <p className="mt-1 text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                        {savedWords.length}
+                    </p>
+                </div>
             </div>
 
-            {/* Recent activity */}
-            <div className="rounded-2xl border p-5 shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("account.recentActivity")}</h3>
+            {/* Recent Activity */}
+            <div className="rounded-2xl border p-6 shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-color)]">
+                    <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                        {t("account.recentActivity")}
+                    </h3>
+                </div>
+
                 {recent.length === 0 ? (
-                    <div className="text-center py-8">
-                        <p className="text-gray-400 text-sm mb-3">{t("account.noPractice")}</p>
-                        <button onClick={() => navigate("/")} className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-500">
+                    <div className="text-center py-12 rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--surface-bg-muted)]">
+                        <svg className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-2 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <p className="text-sm font-semibold text-[var(--text-muted)] mb-3">{t("account.noPractice")}</p>
+                        <button
+                            onClick={() => navigate("/")}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                        >
                             {t("account.startNow")}
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                         {recent.map((item) => {
                             const score = Math.round(item.score);
-                            const scoreCls = score >= 85 ? "bg-green-50 text-green-700" : score >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600";
+                            const scoreBadge = score >= 85
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : score >= 60
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20";
                             return (
-                                <div key={item.id} className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-[var(--surface-hover)]">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${scoreCls}`}>
+                                <div key={item.id} className="flex items-center gap-4 rounded-xl p-3.5 transition-colors border border-[var(--border-color)] bg-[var(--surface-bg-muted)] hover:bg-[var(--surface-hover)]">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${scoreBadge}`}>
                                         {score}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.expectedTextSnapshot}</p>
-                                        <p className="text-xs text-[var(--text-muted)]">{formatDate(item.createdAt)}</p>
+                                        <p className="truncate text-sm font-bold text-[var(--text-primary)]">{item.expectedTextSnapshot}</p>
+                                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatDate(item.createdAt)}</p>
                                     </div>
                                 </div>
                             );
@@ -234,17 +268,39 @@ function HistoryTab({ history, loading, error, t }) {
     const navigate = useNavigate();
     const [openId, setOpenId] = useState(null);
 
-    if (loading) return <div className="text-center py-16 text-gray-400">{t("lessonList.loading")}</div>;
-    if (error) return <div className="text-center py-16 text-red-400">{error}</div>;
-    if (history.length === 0) return (
-        <div className="text-center py-16">
-            <p className="text-gray-400 mb-4">{t("account.noPractice")}</p>
-            <button onClick={() => navigate("/")} className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-500">{t("account.startPractice")}</button>
-        </div>
-    );
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">
+                <div className="animate-spin h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full mr-2" />
+                <span className="text-xs font-mono uppercase tracking-wider">{t("lessonList.loading")}</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-16 p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm font-semibold">
+                {error}
+            </div>
+        );
+    }
+
+    if (history.length === 0) {
+        return (
+            <div className="text-center py-20 rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--surface-bg-muted)] p-8">
+                <p className="text-sm font-semibold text-[var(--text-muted)] mb-4">{t("account.noPractice")}</p>
+                <button
+                    onClick={() => navigate("/")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                    {t("account.startPractice")}
+                </button>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
             {history.map((item) => {
                 const mistakes = parseMistakes(item.mistakes);
                 const missing = mistakes.missing_words || [];
@@ -255,62 +311,118 @@ function HistoryTab({ history, loading, error, t }) {
                 const show2m = missing.slice(0, 2);
                 const show2w = wrong.slice(0, 2);
                 const extra = missing.length + wrong.length - show2m.length - show2w.length;
+                const score = Math.round(item.score);
 
                 return (
-                    <div key={item.id} className="overflow-hidden rounded-xl border transition-shadow hover:shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div key={item.id} className="overflow-hidden rounded-2xl border transition-all hover:shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
                         <div className="flex items-stretch">
-                            {/* Score */}
-                            <div className="flex flex-col items-center justify-center gap-1.5 border-r px-3.5 py-4 border-[var(--border-color)]">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${item.score >= 85 ? "bg-green-50 text-green-800" : item.score >= 60 ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700"}`}>
-                                    {Math.round(item.score)}
+                            {/* Score Box */}
+                            <div className="flex flex-col items-center justify-center border-r px-4 py-4 border-[var(--border-color)] shrink-0">
+                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black ${
+                                    score >= 85
+                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                        : score >= 60
+                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                }`}>
+                                    {score}
                                 </div>
                             </div>
+
                             {/* Body */}
-                            <div className="flex-1 min-w-0 cursor-pointer px-4 py-3.5 transition-colors hover:bg-[var(--surface-hover)]" onClick={() => setOpenId(isOpen ? null : item.id)}>
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full font-medium">{lessonTitle}</span>
-                                    <span className="text-xs text-[var(--text-muted)]">{formatDate(item.createdAt)}</span>
+                            <div
+                                className="flex-1 min-w-0 cursor-pointer px-4 py-3.5 transition-colors hover:bg-[var(--surface-hover)]"
+                                onClick={() => setOpenId(isOpen ? null : item.id)}
+                            >
+                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                    <span className="text-[11px] px-2.5 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full font-bold border border-indigo-500/20">
+                                        {lessonTitle}
+                                    </span>
+                                    <span className="text-xs text-[var(--text-muted)] font-mono">{formatDate(item.createdAt)}</span>
                                 </div>
-                                <p className="mb-1 truncate text-sm font-medium text-[var(--text-primary)]">{item.expectedTextSnapshot}</p>
+                                <p className="mb-1 truncate text-sm font-bold text-[var(--text-primary)]">{item.expectedTextSnapshot}</p>
                                 <p className="mb-2 truncate text-xs italic text-[var(--text-muted)]">"{item.transcript}"</p>
+
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     {!missing.length && !wrong.length ? (
-                                        <span className="text-xs text-green-700 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-600 inline-block" />{t("account.noErrors")}</span>
+                                        <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                            {t("account.noErrors")}
+                                        </span>
                                     ) : (
                                         <>
-                                            {show2m.map(w => <span key={w} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 border border-red-100 rounded-full">{w} — {t("account.missing")}</span>)}
-                                            {show2w.map(w => <span key={w} className="text-xs px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full">{w} — {t("account.wrong")}</span>)}
-                                            {extra > 0 && <span className="text-xs text-gray-400">+{extra} {t("account.moreWords")}</span>}
+                                            {show2m.map(w => (
+                                                <span key={w} className="text-[11px] px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-md font-semibold">
+                                                    {w} — {t("account.missing")}
+                                                </span>
+                                            ))}
+                                            {show2w.map(w => (
+                                                <span key={w} className="text-[11px] px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                                                    {w} — {t("account.wrong")}
+                                                </span>
+                                            ))}
+                                            {extra > 0 && <span className="text-xs text-[var(--text-muted)]">+{extra} {t("account.moreWords")}</span>}
                                         </>
                                     )}
                                 </div>
                             </div>
+
                             {/* Actions */}
-                            <div className="flex min-w-[110px] flex-col border-l border-[var(--border-color)]">
-                                <button onClick={() => lessonId && navigate(`/lesson/${lessonId}`)} className="group flex flex-1 flex-col items-center justify-center gap-1 border-b px-4 py-3 transition-colors border-[var(--border-color)] hover:bg-blue-50/70">
-                                    <span className="text-base text-gray-300 group-hover:text-blue-500">▶</span>
-                                    <span className="text-xs text-gray-400 group-hover:text-blue-600 text-center leading-tight">{t("account.retry")}</span>
+                            <div className="flex min-w-[100px] flex-col border-l border-[var(--border-color)]">
+                                <button
+                                    onClick={() => lessonId && navigate(`/lesson/${lessonId}`)}
+                                    className="flex flex-1 items-center justify-center gap-1.5 border-b px-3 py-2.5 transition-colors border-[var(--border-color)] hover:bg-indigo-500/10 hover:text-indigo-600 text-[var(--text-secondary)] text-xs font-bold cursor-pointer"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                                    </svg>
+                                    {t("account.retry")}
                                 </button>
-                                <button onClick={() => setOpenId(isOpen ? null : item.id)} className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3 transition-colors hover:bg-[var(--surface-hover)]">
-                                    <span className="text-xs text-gray-300">{isOpen ? "▲" : "▼"}</span>
-                                    <span className="text-xs text-gray-400">{t("account.details")}</span>
+                                <button
+                                    onClick={() => setOpenId(isOpen ? null : item.id)}
+                                    className="flex flex-1 items-center justify-center gap-1 px-3 py-2.5 transition-colors hover:bg-[var(--surface-hover)] text-[var(--text-muted)] text-xs font-semibold cursor-pointer"
+                                >
+                                    <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                    {t("account.details")}
                                 </button>
                             </div>
                         </div>
+
                         {isOpen && (
-                            <div className="grid grid-cols-2 gap-4 border-t px-4 py-4 bg-[var(--surface-bg-muted)] border-[var(--border-color)]">
-                                <div className="flex flex-col gap-3">
-                                    <div><p className="mb-1 text-xs uppercase tracking-wide text-[var(--text-muted)]">{t("account.original")}</p><p className="text-sm text-[var(--text-primary)]">{item.expectedTextSnapshot}</p></div>
-                                    <div><p className="mb-1 text-xs uppercase tracking-wide text-[var(--text-muted)]">{t("account.youSaid")}</p><p className="text-sm italic text-[var(--text-secondary)]">"{item.transcript}"</p></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t px-6 py-4 bg-[var(--surface-bg-muted)] border-[var(--border-color)]">
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="mb-1 text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">{t("account.original")}</p>
+                                        <p className="text-sm font-semibold text-[var(--text-primary)]">{item.expectedTextSnapshot}</p>
+                                    </div>
+                                    <div>
+                                        <p className="mb-1 text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">{t("account.youSaid")}</p>
+                                        <p className="text-sm italic text-[var(--text-secondary)]">"{item.transcript}"</p>
+                                    </div>
                                 </div>
-                                <div className="border-l pl-4 border-[var(--border-color)]">
-                                    <p className="mb-2 text-xs uppercase tracking-wide text-[var(--text-muted)]">{t("account.feedback")}</p>
+                                <div className="md:border-l md:pl-4 border-[var(--border-color)]">
+                                    <p className="mb-2 text-[11px] uppercase tracking-wider font-bold text-[var(--text-muted)]">{t("account.feedback")}</p>
                                     {!missing.length && !wrong.length ? (
-                                        <span className="text-sm text-green-700">{t("account.perfectPron")}</span>
+                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                            </svg>
+                                            {t("account.perfectPron")}
+                                        </span>
                                     ) : (
                                         <div className="flex flex-wrap gap-1.5">
-                                            {missing.map(w => <span key={w} className="text-xs px-2 py-1 bg-red-50 text-red-700 border border-red-100 rounded-full">{w} — {t("account.missing")}</span>)}
-                                            {wrong.map(w => <span key={w} className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full">{w} — {t("account.wrong")}</span>)}
+                                            {missing.map(w => (
+                                                <span key={w} className="text-xs px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-md font-semibold">
+                                                    {w} — {t("account.missing")}
+                                                </span>
+                                            ))}
+                                            {wrong.map(w => (
+                                                <span key={w} className="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                                                    {w} — {t("account.wrong")}
+                                                </span>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
@@ -350,22 +462,41 @@ function SavedVocabTab({ words, loading, onDelete, t }) {
     };
 
     const playAudio = (word) => {
+        if (!word || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(word);
-        u.lang = "en-US"; u.rate = 0.9;
+        u.lang = "en-US";
+        u.rate = 0.9;
         window.speechSynthesis.speak(u);
     };
 
     if (flashcardMode) {
         if (done) return (
-            <div className="flex flex-col items-center justify-center py-16 gap-6">
-                <div className="text-6xl">🎉</div>
-                <div className="text-center">
-                    <h3 className="text-2xl font-black text-gray-900 mb-1">{t("vocab.completed")}</h3>
-                    <p className="text-gray-500">{t("vocab.remembered")} <strong className="text-green-600">{remembered.length}</strong> / {shuffled.length}</p>
+            <div className="flex flex-col items-center justify-center py-16 gap-5 bg-[var(--surface-bg)] border border-[var(--border-color)] rounded-3xl p-8 max-w-md mx-auto shadow-xl">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={startFlashcard} className="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-500">{t("vocab.redo")}</button>
-                    <button onClick={() => setFlashcardMode(false)} className="rounded-xl border px-5 py-2.5 font-medium text-[var(--text-secondary)] bg-[var(--surface-bg)] border-[var(--border-color)] hover:bg-[var(--surface-hover)]">{t("vocab.backToList")}</button>
+                <div className="text-center">
+                    <h3 className="text-2xl font-black text-[var(--text-primary)] mb-1">{t("vocab.completed")}</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                        {t("vocab.remembered")} <strong className="text-emerald-600 dark:text-emerald-400 font-black">{remembered.length}</strong> / {shuffled.length}
+                    </p>
+                </div>
+                <div className="flex gap-3 w-full">
+                    <button
+                        onClick={startFlashcard}
+                        className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
+                    >
+                        {t("vocab.redo")}
+                    </button>
+                    <button
+                        onClick={() => setFlashcardMode(false)}
+                        className="flex-1 py-3 rounded-xl border border-[var(--border-color)] font-bold text-xs uppercase tracking-wider text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-all cursor-pointer"
+                    >
+                        {t("vocab.backToList")}
+                    </button>
                 </div>
             </div>
         );
@@ -373,79 +504,157 @@ function SavedVocabTab({ words, loading, onDelete, t }) {
         const current = shuffled[currentIndex];
         return (
             <div className="max-w-lg mx-auto py-6">
-                <div className="flex items-center gap-3 mb-8">
-                    <button onClick={() => setFlashcardMode(false)} className="text-sm text-gray-400 hover:text-gray-700">{t("vocab.exit")}</button>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${(currentIndex / shuffled.length) * 100}%` }} />
+                <div className="flex items-center gap-3 mb-6">
+                    <button
+                        onClick={() => setFlashcardMode(false)}
+                        className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                    >
+                        ← {t("vocab.exit")}
+                    </button>
+                    <div className="flex-1 h-2 bg-[var(--surface-bg-muted)] border border-[var(--border-color)] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                            style={{ width: `${((currentIndex + 1) / shuffled.length) * 100}%` }}
+                        />
                     </div>
-                    <span className="text-sm text-gray-500 font-medium">{currentIndex + 1}/{shuffled.length}</span>
+                    <span className="text-xs font-mono font-bold text-[var(--text-muted)]">
+                        {currentIndex + 1} / {shuffled.length}
+                    </span>
                 </div>
 
-                <div className="relative cursor-pointer mb-8" style={{ perspective: "1000px" }} onClick={() => { setIsFlipped(f => !f); if (!isFlipped) playAudio(current.word); }}>
-                    <div className="relative w-full rounded-3xl shadow-xl transition-transform duration-500" style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)", minHeight: "260px" }}>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl p-8 bg-[var(--surface-bg)]" style={{ backfaceVisibility: "hidden" }}>
-                            <p className="mb-4 text-xs uppercase tracking-widest text-[var(--text-muted)]">{t("vocab.englishWord")}</p>
-                            <h2 className="mb-2 text-4xl font-extrabold text-[var(--text-primary)]">{current.word}</h2>
-                            {current.ipa && <p className="font-mono text-sm text-[var(--text-muted)]">{current.ipa}</p>}
-                            <p className="mt-6 text-xs text-[var(--text-muted)]">{t("vocab.tapToReveal")}</p>
+                <div
+                    className="relative cursor-pointer mb-6"
+                    style={{ perspective: "1000px" }}
+                    onClick={() => { setIsFlipped(f => !f); if (!isFlipped) playAudio(current.word); }}
+                >
+                    <div
+                        className="relative w-full rounded-3xl shadow-xl transition-transform duration-500"
+                        style={{
+                            transformStyle: "preserve-3d",
+                            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                            minHeight: "260px"
+                        }}
+                    >
+                        <div
+                            className="absolute inset-0 flex flex-col items-center justify-between rounded-3xl p-8 bg-[var(--surface-bg)] border-2 border-[var(--border-color)]"
+                            style={{ backfaceVisibility: "hidden" }}
+                        >
+                            <span className="text-[11px] font-mono uppercase tracking-widest font-bold text-[var(--text-muted)]">
+                                {t("vocab.englishWord")}
+                            </span>
+                            <div className="text-center my-auto">
+                                <h2 className="text-3xl sm:text-4xl font-black text-[var(--text-primary)] mb-2">{current.word}</h2>
+                                {current.ipa && <p className="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-semibold">{current.ipa}</p>}
+                            </div>
+                            <span className="text-xs font-semibold text-[var(--text-muted)]">{t("vocab.tapToReveal")}</span>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl flex flex-col items-center justify-center p-8" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                            <p className="text-xs text-indigo-200 uppercase tracking-widest mb-4">{t("vocab.vietnamese")}</p>
-                            <h2 className="text-3xl font-extrabold text-white mb-2 text-center">{current.translation}</h2>
-                            {current.example && <p className="text-sm text-indigo-200 italic text-center mt-3">"{current.example}"</p>}
+
+                        <div
+                            className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-3xl flex flex-col items-center justify-between p-8 text-white shadow-2xl"
+                            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                        >
+                            <span className="text-[11px] font-mono uppercase tracking-widest font-bold text-indigo-200">
+                                {t("vocab.vietnamese")}
+                            </span>
+                            <div className="text-center my-auto px-4">
+                                <h2 className="text-2xl sm:text-3xl font-black mb-2">{current.translation}</h2>
+                                {current.example && <p className="text-xs text-indigo-100 italic leading-relaxed">"{current.example}"</p>}
+                            </div>
+                            <span className="text-xs text-indigo-200">Đánh giá ghi nhớ bên dưới</span>
                         </div>
                     </div>
                 </div>
 
                 {isFlipped ? (
-                    <div className="flex gap-4">
-                        <button onClick={() => handleAnswer(false)} className="flex-1 py-3.5 bg-amber-50 text-amber-700 font-bold rounded-2xl border-2 border-amber-200 hover:bg-amber-100 transition-all">{t("vocab.review")}</button>
-                        <button onClick={() => handleAnswer(true)} className="flex-1 py-3.5 bg-green-50 text-green-700 font-bold rounded-2xl border-2 border-green-200 hover:bg-green-100 transition-all">{t("vocab.known")}</button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => handleAnswer(false)}
+                            className="py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold rounded-xl border border-amber-500/30 text-xs uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                            {t("vocab.review")}
+                        </button>
+                        <button
+                            onClick={() => handleAnswer(true)}
+                            className="py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl border border-emerald-500/30 text-xs uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                            {t("vocab.known")}
+                        </button>
                     </div>
                 ) : (
-                    <p className="text-center text-gray-400 text-sm">{t("vocab.thinkFirst")}</p>
+                    <p className="text-center text-[var(--text-muted)] text-xs font-medium">{t("vocab.thinkFirst")}</p>
                 )}
             </div>
         );
     }
 
-    if (loading) return <div className="text-center py-16 text-gray-400">{t("lessonList.loading")}</div>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">
+                <div className="animate-spin h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full mr-2" />
+                <span className="text-xs font-mono uppercase tracking-wider">{t("lessonList.loading")}</span>
+            </div>
+        );
+    }
 
-    if (words.length === 0) return (
-        <div className="text-center py-16">
-            <div className="text-4xl mb-4">📚</div>
-            <p className="text-gray-400 text-sm">{t("vocab.noWords")}</p>
-            <p className="text-gray-300 text-xs mt-1">{t("vocab.saveHint")}</p>
-        </div>
-    );
+    if (words.length === 0) {
+        return (
+            <div className="text-center py-20 rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--surface-bg-muted)] p-8">
+                <svg className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <p className="text-sm font-bold text-[var(--text-primary)] mb-1">{t("vocab.noWords")}</p>
+                <p className="text-xs text-[var(--text-muted)]">{t("vocab.saveHint")}</p>
+            </div>
+        );
+    }
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-500"><span className="font-semibold text-gray-900">{words.length}</span> {t("vocab.savedCount")}</p>
-                <button onClick={startFlashcard} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-500 transition-colors">
+            <div className="flex items-center justify-between mb-5">
+                <span className="text-xs font-mono font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    {words.length} {t("vocab.savedCount")}
+                </span>
+                <button
+                    onClick={startFlashcard}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
                     {t("vocab.flashcard")}
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {words.map((vocab) => (
-                    <div key={vocab.id} className="group flex items-start gap-3 rounded-xl border p-4 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
+                    <div key={vocab.id} className="group flex items-start gap-3 rounded-2xl border p-4 shadow-sm transition-all hover:border-indigo-400/50 hover:shadow-md bg-[var(--surface-bg)] border-[var(--border-color)]">
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-bold text-gray-900">{vocab.word}</span>
-                                {vocab.ipa && <span className="text-xs text-gray-400 font-mono">{vocab.ipa}</span>}
-                                <button onClick={() => playAudio(vocab.word)} className="ml-auto text-gray-300 hover:text-indigo-500 transition-colors">🔊</button>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="font-bold text-base text-[var(--text-primary)]">{vocab.word}</span>
+                                {vocab.ipa && <span className="text-xs font-mono text-[var(--text-muted)] px-1.5 py-0.5 rounded bg-[var(--surface-bg-muted)] border border-[var(--border-color)]">{vocab.ipa}</span>}
+                                <button
+                                    onClick={() => playAudio(vocab.word)}
+                                    className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-indigo-600 hover:bg-indigo-500/10 transition-colors cursor-pointer"
+                                    title="Nghe phát âm"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.414 0-.75-.336-.75-.75V8.25c0-.414.336-.75.75-.75h2.24z" />
+                                    </svg>
+                                </button>
                             </div>
-                            <p className="text-sm text-indigo-700 font-medium">{vocab.translation}</p>
-                            {vocab.example && <p className="text-xs text-gray-400 italic mt-1 truncate">"{vocab.example}"</p>}
-                            <p className="mt-1 text-xs text-[var(--text-muted)]">{formatDate(vocab.createdAt)}</p>
+                            <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1">{vocab.translation}</p>
+                            {vocab.example && <p className="text-xs text-[var(--text-muted)] italic truncate">"{vocab.example}"</p>}
+                            <p className="mt-1 text-[11px] font-mono text-[var(--text-muted)]">{formatDate(vocab.createdAt)}</p>
                         </div>
                         <button
                             onClick={() => onDelete(vocab.id)}
-                            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                             title={t("vocab.deleteTooltip")}
-                        >✕</button>
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 ))}
             </div>
@@ -454,12 +663,6 @@ function SavedVocabTab({ words, loading, onDelete, t }) {
 }
 
 // ─── Main: AccountDashboard ───────────────────────────────────────────────────
-const TAB_KEYS = [
-    { id: "overview", labelKey: "account.tabs.overview", icon: "📊" },
-    { id: "history", labelKey: "account.tabs.history", icon: "📋" },
-    { id: "vocabulary", labelKey: "account.tabs.saved", icon: "💾" },
-];
-
 export default function AccountDashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(getUser());
@@ -471,52 +674,93 @@ export default function AccountDashboard() {
     const [historyError, setHistoryError] = useState("");
     const [savedWords, setSavedWords] = useState([]);
     const [vocabLoading, setVocabLoading] = useState(true);
+    const [authExpired, setAuthExpired] = useState(false);
 
     useEffect(() => {
         if (!user) { navigate("/login"); return; }
 
         api.get("/api/evaluate/history")
-            .then(res => { if (!res.ok) throw new Error(t("account.errorLoadHistory")); return res.json(); })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    setAuthExpired(true);
+                    throw new Error("Phiên đăng nhập đã hết hạn");
+                }
+                if (!res.ok) throw new Error(t("account.errorLoadHistory"));
+                return res.json();
+            })
             .then(setHistory)
             .catch(err => setHistoryError(err.message))
             .finally(() => setHistoryLoading(false));
 
         api.get("/api/user-vocabulary")
-            .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-            .then(setSavedWords)
-            .catch(() => { })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    setAuthExpired(true);
+                    return [];
+                }
+                if (!res.ok) throw new Error();
+                return res.json();
+            })
+            .then(data => { if (Array.isArray(data)) setSavedWords(data); })
+            .catch(() => {})
             .finally(() => setVocabLoading(false));
-    }, []);
+    }, [user, navigate, t]);
 
     const handleDeleteWord = useCallback(async (id) => {
         if (!window.confirm(t("account.deleteConfirm"))) return;
         const res = await api.delete(`/api/user-vocabulary/${id}`);
         if (res.ok) setSavedWords(prev => prev.filter(w => w.id !== id));
-    }, []);
+    }, [t]);
 
-    // Callback khi upload ảnh thành công → cập nhật state user để avatar đổi ngay
     const handleAvatarUploaded = (newAvatarUrl) => {
         setUser(prev => ({ ...prev, avatarUrl: newAvatarUrl }));
     };
+
+    // Xác định email hiển thị
+    const displayEmail = user?.email || (user?.username?.includes("@") ? user.username : t("account.noEmail"));
 
     return (
         <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
+                {/* Banner cảnh báo phiên đăng nhập hết hạn (403 fix) */}
+                {authExpired && (
+                    <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                            <p className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400">
+                                Phiên đăng nhập đám mây đã hết hạn hoặc máy chủ đã được cập nhật. Vui lòng đăng xuất và đăng nhập lại!
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => { logout(); navigate("/login"); }}
+                            className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0"
+                        >
+                            Đăng nhập lại
+                        </button>
+                    </div>
+                )}
+
                 {/* Profile Header */}
-                <div className="mb-6 flex items-center gap-5 rounded-2xl border p-6 shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
-                    {/* Avatar có nút upload */}
+                <div className="mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 rounded-3xl border p-6 sm:p-8 shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
                     <UploadableAvatar user={user} onUploadSuccess={handleAvatarUploaded} />
 
-                    <div className="flex-1 min-w-0">
-                        <h1 className="truncate text-xl font-bold text-[var(--text-primary)]">{user?.username}</h1>
-                        <p className="text-sm text-[var(--text-muted)]">{user?.email || t("account.noEmail")}</p>
-                        <span className="inline-block mt-1 text-xs px-2.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-full font-medium">
-                            {user?.role || "USER"}
-                        </span>
-                        {/* Gợi ý nhỏ cho người dùng */}
-                        <p className="mt-2 text-xs text-[var(--text-muted)] flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
+                            <h1 className="truncate text-xl sm:text-2xl font-black text-[var(--text-primary)]">
+                                {user?.username}
+                            </h1>
+                            <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                {user?.role || "USER"}
+                            </span>
+                        </div>
+                        <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">
+                            {displayEmail}
+                        </p>
+                        <p className="mt-3 text-xs text-[var(--text-muted)] inline-flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Di chuột vào ảnh để thay đổi ảnh đại diện
@@ -525,28 +769,58 @@ export default function AccountDashboard() {
 
                     <button
                         onClick={() => { logout(); navigate("/login"); }}
-                        className="shrink-0 rounded-xl border px-4 py-2 text-sm transition-all text-[var(--text-secondary)] border-[var(--border-color)] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                        className="rounded-xl border px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all text-[var(--text-secondary)] border-[var(--border-color)] hover:border-rose-300 hover:bg-rose-500/10 hover:text-rose-600 cursor-pointer"
                     >
                         {t("account.logout")}
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="mb-6 flex gap-1 rounded-xl border p-1 shadow-sm bg-[var(--surface-bg)] border-[var(--border-color)]">
-                    {TAB_KEYS.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all
-                                ${activeTab === tab.id ? "bg-indigo-600 text-white shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"}`}
-                        >
-                            <span>{tab.icon}</span>
-                            <span className="hidden sm:inline">{t(tab.labelKey)}</span>
-                        </button>
-                    ))}
+                <div className="mb-6 flex p-1.5 rounded-2xl border bg-[var(--surface-bg-muted)] border-[var(--border-color)] shadow-inner">
+                    <button
+                        onClick={() => setActiveTab("overview")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                            activeTab === "overview"
+                                ? "bg-[var(--surface-bg)] text-indigo-600 dark:text-indigo-400 shadow-sm border border-[var(--border-color)]"
+                                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                        </svg>
+                        <span>{t("account.tabs.overview")}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("history")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                            activeTab === "history"
+                                ? "bg-[var(--surface-bg)] text-indigo-600 dark:text-indigo-400 shadow-sm border border-[var(--border-color)]"
+                                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{t("account.tabs.history")}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("vocabulary")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                            activeTab === "vocabulary"
+                                ? "bg-[var(--surface-bg)] text-indigo-600 dark:text-indigo-400 shadow-sm border border-[var(--border-color)]"
+                                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                        <span>{t("account.tabs.saved")}</span>
+                    </button>
                 </div>
 
-                {/* Tab content */}
+                {/* Tab Content */}
                 <div>
                     {activeTab === "overview" && (
                         <OverviewTab history={history} savedWords={savedWords} t={t} />
